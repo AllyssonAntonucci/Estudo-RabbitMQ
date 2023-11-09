@@ -1,0 +1,59 @@
+﻿using RabbitMQ.Client;
+using System.Text;
+
+namespace publicador04
+{
+    internal class Program
+    {
+        static void Main()
+        {
+            //Servidor do Rabbitmq
+            var servidor = new ConnectionFactory()
+            {
+                HostName = "localhost",
+                Port = 5672,
+                UserName = "usuario",
+                Password = "senha123"
+            };
+
+            //Conexão com o servidor
+            var conexao = servidor.CreateConnection();
+            {
+                //Canal
+                using (var canal = conexao.CreateModel())
+                {
+                    //Criar uma Exchange
+                    canal.ExchangeDeclare(exchange: "mensagem_empresa", type: ExchangeType.Direct);
+
+                    Console.WriteLine("Digite uma mensagem");
+
+                    while (true)
+                    {
+                        //Mensagem
+                        string mensagem = Console.ReadLine();
+
+                        if (mensagem == "!finalizar") break;
+
+                        //Convertendo a Mensagem em bytes
+                        var corpoMensagem = Encoding.UTF8.GetBytes(mensagem);
+
+                        //pegar uma routkey
+                        Console.WriteLine("Digite uma rota");
+                        string rotaKey = Console.ReadLine();
+
+                        //registrar mensagem
+                        canal.BasicPublish(exchange: "mensagem_empresa",
+                                             routingKey: rotaKey,
+                                             basicProperties: null,
+                                             body: corpoMensagem);
+
+                        Console.WriteLine(" [x] Enviou {0}", mensagem);
+                    }
+                }
+
+                Console.WriteLine(" Pressione [enter] para sair.");
+                Console.ReadLine();
+            }
+        }
+    }
+}
